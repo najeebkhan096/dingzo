@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "235287723116",
+    "project_id": "dingzo-84a67",
+    "storage_bucket": "dingzo-84a67.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:235287723116:android:24043045ec9766fee0ac49",
+        "android_client_info": {
+          "package_name": "com.example.dingzo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "235287723116-1533nrghfgrbip7gq2t3c9ma863ctv89.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWG6acFe62nbjitsrdzpi5kGaUH0SryHY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "235287723116-1533nrghfgrbip7gq2t3c9ma863ctv89.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
