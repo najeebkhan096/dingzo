@@ -238,7 +238,7 @@ class SoldSellerend extends StatelessWidget {
                 ),
               ),
               SizedBox(height: height*0.025,),
-              Carsoul_Image(sold: true),
+              Carsoul_Image(sold: true,prodimages: []),
               SizedBox(height: height*0.025,),
 
               DetailsBox(context),

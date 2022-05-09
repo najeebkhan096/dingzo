@@ -1,9 +1,12 @@
+import 'package:dingzo/Database/SociaMediaDatabase.dart';
 import 'package:dingzo/constants.dart';
 import 'package:dingzo/model/myuser.dart';
 import 'package:dingzo/screens/chat/chat_bubble.dart';
+import 'package:dingzo/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Chat_Screen extends StatefulWidget {
 
@@ -29,10 +32,10 @@ class _Chat_ScreenState extends State<Chat_Screen> {
     ChatMessage(message: "How are you?",type: MessageType.Sender,userimage: "https://tse1.mm.bing.net/th?id=OIP.23gnJYIxRYyTnacDs2mUXQHaHa&pid=Api&P=0&w=176&h=176"),
     ChatMessage(message: "Fine",type: MessageType.Receiver,userimage: "https://tse1.mm.bing.net/th?id=OIP.23gnJYIxRYyTnacDs2mUXQHaHa&pid=Api&P=0&w=176&h=176"),
   ];
-
   String chatid = '';
 
   MyUser? user;
+
 
   void _showErrorDialog(BuildContext context) {
     final width=MediaQuery.of(context).size.width;
@@ -242,18 +245,36 @@ class _Chat_ScreenState extends State<Chat_Screen> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+   current_index=3;
+    super.initState();
+  }
+  @override
   Widget build(BuildContext context) {
     print("step1");
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-    user= ModalRoute.of(context)!.settings.arguments as MyUser;
+    final List data= ModalRoute.of(context)!.settings.arguments as List;
+    try{
+      chatid=data[0];
+      user=data[1];
+
+    }catch(error){
+
+    }
 
     return Scaffold(
       backgroundColor: Color(0xffE5E5E5),
       body: //body
       ListView(
         children: [
-       //appbar
+    Container(
+      height: height*0.86,
+      child: ListView(
+
+        children: [
+          //appbar
           Container(
             height: height*0.15,
             width: width*1,
@@ -265,12 +286,14 @@ class _Chat_ScreenState extends State<Chat_Screen> {
 
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-               SizedBox(height: height*0.025,),
+                SizedBox(height: height*0.025,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Container(
-
+                    InkWell(
+                      onTap: (){
+                        Navigator.of(context).pop();
+                      },
                       child: CircleAvatar(
                           radius: 15,
                           backgroundColor: Colors.white,
@@ -278,14 +301,14 @@ class _Chat_ScreenState extends State<Chat_Screen> {
                       ),
                     ),
 
-      Text(user!.username.toString(),style: _const.raleway_extrabold(30, FontWeight.w800),),
+                    Text(user!.username.toString(),style: _const.raleway_extrabold(30, FontWeight.w800),),
 
 
-    InkWell(
-        onTap: (){
-          _showErrorDialog(context);
-        },
-        child: Image.asset('images/cart.png',))
+                    InkWell(
+                        onTap: (){
+                          _showErrorDialog(context);
+                        },
+                        child: Image.asset('images/cart.png',))
                   ],
                 ),
 
@@ -304,33 +327,60 @@ class _Chat_ScreenState extends State<Chat_Screen> {
 
           //chat screen
 
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              StreamBuilder(
+                  stream: FirebaseFirestore.instance.
+                  collection("chatRoom")
+                      .doc(chatid)
+                      .collection("chats")
+                      .orderBy('time')
+                      .snapshots(),
+                  builder: (BuildContext context,AsyncSnapshot<QuerySnapshot> snapshot){
+                    return snapshot.hasData?
 
+                    Container(
 
-          Container(
-            height: height * 0.68,
-            width: width * 1,
-            margin: EdgeInsets.only(
-                left: width * 0.02,
-                right: width * 0.02,
-                top: width * 0.02,
-                bottom: width * 0.02),
-            child: SingleChildScrollView(
-              child: Column(
+                      height: height * 0.445,
+                      width: width * 1,
+                      margin: EdgeInsets.only(
+                          left: width * 0.02,
+                          right: width * 0.02,
+                          top: width * 0.02,
+                          bottom: width * 0.02),
+                      child: SingleChildScrollView(
+                        child: Column(
 
-                children: List.generate(messages_list.length, (index) =>
-                    ChatBubble(
-                      chatMessage: ChatMessage(
-                          message: messages_list[index].message,
-                          type:
-                         messages_list[index].type,
-                        userimage:messages_list[index].userimage
+                          children: List.generate(snapshot.data!.docs.length, (index) =>
+                              ChatBubble(
+                                chatMessage: ChatMessage(
+                                    userimage: '',
+                                    message: snapshot.data!.docs[index]['message'],
+                                    type:
+                                    snapshot.data!.docs[index]['SendBy']==user_id?
+                                    MessageType.Sender
+                                        :
+                                    MessageType.Receiver
 
+                                ),
+                              )
+                          ),
+                        ),
                       ),
                     )
-                ),
-              ),
-            ),
+
+                        :Text("no data");
+                  }),
+
+
+            ],
           ),
+
+        ],
+      ),
+    ),
+
           Card(
             color: Color(0xffFFEA9D),
             margin: EdgeInsets.only(
@@ -352,7 +402,16 @@ class _Chat_ScreenState extends State<Chat_Screen> {
                 ),
                 InkWell(
                     onTap: () {
-_showModalSheet(context);
+                      SocialMediaDatabase _database=SocialMediaDatabase();
+                      _database.addMessage(
+                          chatRoomId: chatid,
+                          chatMessageData: {
+                            'message': message.text,
+                            'SendBy': user_id,
+                            'time':DateTime.now().millisecondsSinceEpoch
+                          }).then((value) {
+                        message.clear();
+                      });
                     },
                     child: CircleAvatar(
                       backgroundColor: Color(0xff8B6824),

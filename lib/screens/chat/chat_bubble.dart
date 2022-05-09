@@ -13,6 +13,8 @@ class _ChatBubbleState extends State<ChatBubble> {
   Widget build(BuildContext context) {
     final height=MediaQuery.of(context).size.height;
     final width=MediaQuery.of(context).size.width;
+    print("jaanu"+widget.chatMessage.userimage.toString());
+
     return Container(
       padding: EdgeInsets.only(left: 16,right: 16,top: 10,bottom: 10),
       child: Align(
@@ -22,10 +24,16 @@ class _ChatBubbleState extends State<ChatBubble> {
 
             child: Row(
               children: [
-              CircleAvatar(
-                radius: 27,
-                 backgroundImage: NetworkImage(widget.chatMessage.userimage.toString())
-              ),
+                (widget.chatMessage.userimage==null || widget.chatMessage.userimage.isEmpty )?
+
+                CircleAvatar(
+                  radius: 27,
+                  child: Center(child: Text("No image",style: TextStyle(fontSize: 10),)),
+                ):  CircleAvatar(
+                    radius: 27,
+                    backgroundImage: NetworkImage(widget.chatMessage.userimage.toString())
+                )
+                ,
                 Container(
                   margin: EdgeInsets.only(left: width*0.025),
                   decoration:
@@ -57,6 +65,13 @@ class _ChatBubbleState extends State<ChatBubble> {
                   child: Text(widget.chatMessage.message.toString(),style: _const.raleway_semi_444444(13, FontWeight.w600)),
 
                 ),
+
+                (widget.chatMessage.userimage==null || widget.chatMessage.userimage.isEmpty )?
+
+                CircleAvatar(
+                  radius: 27,
+                  child: Center(child: Text("No image",style: TextStyle(fontSize: 10),)),
+                ):
                 CircleAvatar(
                     radius: 27,
                     backgroundImage: NetworkImage(widget.chatMessage.userimage.toString())

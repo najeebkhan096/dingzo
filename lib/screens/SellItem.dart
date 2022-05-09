@@ -457,6 +457,7 @@ class _SellItemState extends State<SellItem> {
                         categ = value as String;
                       });
                     },
+                    underline: DropdownButtonHideUnderline(child: Text("")),
                     icon: Icon(Icons.arrow_drop_down,color: Colors.white),
                     isExpanded: true,
 
@@ -465,6 +466,7 @@ class _SellItemState extends State<SellItem> {
                         child: Text("Select Category",style:  _const.raleway_SemiBold_white(16, FontWeight.w600))),
                     items: category_list
                         .map((e) => DropdownMenuItem(
+
                         value: e, child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Container(
@@ -504,6 +506,7 @@ class _SellItemState extends State<SellItem> {
                         brand = value as String;
                       });
                     },
+                    underline: DropdownButtonHideUnderline(child: Text("")),
                     icon: Icon(Icons.arrow_drop_down,color: Colors.white),
                     isExpanded: true,
                     dropdownColor: Color(0xffEFB546),
@@ -552,6 +555,7 @@ class _SellItemState extends State<SellItem> {
                           condition = value as String;
                         });
                       },
+                      underline: DropdownButtonHideUnderline(child: Text("")),
                       icon: Icon(Icons.arrow_drop_down,color: Colors.white),
                       isExpanded: true,
 dropdownColor: Color(0xffEFB546),
@@ -579,6 +583,7 @@ dropdownColor: Color(0xffEFB546),
           SizedBox(
             height: height * 0.025,
           ),
+
           Container(
             margin: EdgeInsets.only(left: width * 0.05),
             child: Text("Shipping (Required)",
@@ -748,7 +753,7 @@ _showErrorDialog(context, "Please Select Condition");
                         isloading=true;
                       });
 try{
-  Database _database = Database();
+  ProductDatabase _database = ProductDatabase();
   await uploadFile().then((value)async {
     await _database.uploadProduct(
         product: Product(

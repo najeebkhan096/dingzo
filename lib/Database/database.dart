@@ -15,6 +15,74 @@ import 'package:path/path.dart' as Path;
 
 class Database{
 
+  Future<List<MyUser>> fetchusers() async {
+print("user func ");
+    List<MyUser> request=[];
+List<String> querylist=[];
+CollectionReference chatcollection =
+FirebaseFirestore.instance.collection('chatRoom');
+
+    await   chatcollection.get().then((QuerySnapshot snapshot) {
+
+    snapshot.docs.forEach((element) {
+      querylist.add(element.id);
+    });
+
+      });
+
+    CollectionReference collection =
+    FirebaseFirestore.instance.collection('Users');
+
+    await collection.get().then((QuerySnapshot snapshot) {
+      snapshot.docs.forEach((element) {
+
+        Map fetcheddata = element.data() as Map<String, dynamic>;
+
+        String roomid=fetcheddata['userid']+"and"+user_id;
+        String roomid2=user_id+"and"+fetcheddata['userid'];
+
+
+        if(querylist.contains(roomid) ||querylist.contains(roomid2)  ) {
+          request.add(MyUser(
+            uid: fetcheddata['userid'].toString(),
+            email: fetcheddata['email'].toString(),
+            username: fetcheddata['username'].toString(),
+            imageurl: fetcheddata['imageurl'].toString(),
+
+          ),);
+        }
+
+
+
+      });
+    });
+
+print("final length is "+request.length.toString());
+    return request;
+  }
+
+  Future<bool> CheckUserExistance (String loggeduserid) async {
+
+    bool exist=false;
+
+    CollectionReference collection =
+    FirebaseFirestore.instance.collection('Users');
+
+    await collection.get().then((QuerySnapshot snapshot) {
+      snapshot.docs.forEach((element) {
+
+        Map fetcheddata = element.data() as Map<String, dynamic>;
+
+      if(fetcheddata['userid']==loggeduserid){
+        exist=true;
+      }
+      });
+    });
+
+
+    return exist;
+  }
+
 
   Future<MyUser?> fetchprofiledata({String ? DesiredUserID}) async {
     MyUser? user;
@@ -88,9 +156,16 @@ class Database{
 
       FirebaseAuth _auth=  FirebaseAuth.instance;
       User? newuser=_auth.currentUser;
-      final result=await adduser(userid:newuser!.uid ,name: newuser.displayName!,email: newuser.email,imageurl: newuser.photoURL.toString()).then((value) async {
-        user_docid=value.toString();
-      });
+      bool exist=await CheckUserExistance(newuser!.uid);
+      if(exist){
+        print("Already Created Account");
+      }
+      else{
+        final result=await adduser(userid:newuser.uid ,name: newuser.displayName!,email: newuser.email,imageurl: newuser.photoURL.toString()).then((value) async {
+          user_docid=value.toString();
+        });
+      }
+
 
     } else {
       print('Unable to sign in');
@@ -98,111 +173,10 @@ class Database{
   }
 
 
-  CollectionReference ? imgRef;
-
-  Future Add_Order(Order myorder) async {
 
 
-    Map<String, dynamic> data = {
-      'products': myorder.products!.map(
-              (e) => {
-            'title': e.title,
-            'subtitle': e.description,
-            'price': e.price,
-            'total_price':e.total,
-            'quantity':e.quantity,
-            'prodoct_id':e.product_doc_id
 
-          }).toList(),
-      'notes': myorder.notes,
-      'total_price': myorder.total_price,
-      'date': myorder.date,
-      'userid':user_id,
-      'location':myorder.location,
-      'customer_latitude':myorder.customer_latitude,
-      'customer_longitude':myorder.customer_longitude,
-      'customer_name':myorder.customer_name,
-      'order_status':'ongoing',
-      'restuarent_id':myorder.restuarent_id.toString()
-    };
-    print("ek baars");
 
-    CollectionReference collection =
-    FirebaseFirestore.instance.collection('Orders');
-    collection.add(data);
-
-  }
-
-  Future uploadProduct({Product ? product})async{
-
-    CollectionReference ? imgRef;
-    Reference ? ref;
-
-    imgRef = FirebaseFirestore.instance.collection('Products');
-    imgRef.add({
-      'title':product!.title,
-      'description': product.description,
-      'price':product.price,
-      'photos': product.photos!.map(
-    (e) => {
-    'imageurl': e,
-    }).toList(),
-      'condition':product.condition,
-      'category':product.category,
-      'status':true,
-      'seller_id':product.sellerid,
-      'seller_name':product.sellername,
-      'sales':product.sales,
-      'brand':product.brand,
-      'freeshipment':product.freeshipment,
-
-    });
-  }
-  Future<List<Product>> fetch_products({String ? title}) async {
-
-    List<Product> newCategories = [];
-    CollectionReference collection =
-    FirebaseFirestore.instance.collection('Products');
-
-    await collection.get().then((QuerySnapshot snapshot) {
-      snapshot.docs.forEach((element) {
-        Map fetcheddata = element.data() as Map<String, dynamic>;
-        print("step1");
-        List<dynamic> photos = fetcheddata['photos'];
-
-        if (fetcheddata['category'] == title) {
-          Product new_product = Product(
-              title: fetcheddata['title'],
-              price: fetcheddata['price'],
-              quantity: 1,
-              id: element.id,
-              status: fetcheddata['status'],
-              category: fetcheddata['category'],
-              product_doc_id: element.id,
-              description: fetcheddata['description'],
-              total: 0,
-              brand: fetcheddata['brand'],
-              photos:photos
-                  .map(
-                    (e) => e['imageurl'].toString()
-              )
-                  .toList(),
-              condition: fetcheddata['condition'],
-              freeshipment: fetcheddata['freeshipment'],
-              sellerid: fetcheddata['seller_id'],
-
-              sales: fetcheddata['sales'],
-              sellername: fetcheddata['seller_name'].toString()
-          );
-          newCategories.add(new_product);
-        }
-
-      });
-    }).then((value) {
-      newCategories.sort((a,b)=>a.sales!.toInt() .compareTo(b.sales!.toInt() ));
-      newCategories=newCategories.reversed.toList();
-    });
-
-    return newCategories;
-  }
 }
+
+List<Product> cartitems=[];

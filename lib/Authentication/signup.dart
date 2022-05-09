@@ -141,6 +141,7 @@ print("our email is "+email.toString()+pass.toString());
 
         height: height*1,
         child: Stack(
+          fit: StackFit.expand,
           children: [
             Container(
 

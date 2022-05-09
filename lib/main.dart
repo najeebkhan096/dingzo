@@ -61,12 +61,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'Database/auth.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await Firebase.initializeApp();
+  Stripe.publishableKey = 'pk_test_51K1GtiD5z0PA4b4fVeiLsLZeybhP8WNeFOf4If4PMWgTDVhAlHR3C1h2i9IeVRl0yWjUDmrccpgR3Is3qjKYNcG700YBFcIehs';
+
+  await Stripe.instance.applySettings();
   runApp( MyApp());
 }
 

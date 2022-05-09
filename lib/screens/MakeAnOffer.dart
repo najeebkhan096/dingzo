@@ -139,7 +139,7 @@ class MakeAnOffer extends StatelessWidget {
                 color: Color(0xffFFEA9D),
                 child: Column(
                   children: [
-                    Carsoul_Image(sold: false),
+                    Carsoul_Image(sold: false,prodimages: []),
                     SizedBox(
                       height: height * 0.025,
                     ),

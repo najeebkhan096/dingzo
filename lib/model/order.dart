@@ -1,4 +1,6 @@
+import 'package:dingzo/model/myuser.dart';
 import 'package:dingzo/model/product.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Order{
   List<Product> ? products;
@@ -12,10 +14,10 @@ class Order{
   String ? order_status;
   double ? customer_latitude;
   double ? customer_longitude;
-  String ? restuarent_id;
+  String ? sellerid;
 
   Order({
-    this.restuarent_id,
+    this.sellerid,
     this.products,
     this.userid,
     this.location,
@@ -29,4 +31,40 @@ class Order{
     this.customer_latitude,
 
   });
+}
+class OrderDatabase{
+
+
+  Future Add_Order(Order myorder) async {
+
+
+    Map<String, dynamic> data = {
+      'products': myorder.products!.map(
+              (e) => {
+            'title': e.title,
+            'subtitle': e.description,
+            'price': e.price,
+            'total_price':e.total,
+            'quantity':e.quantity,
+            'prodoct_id':e.product_doc_id
+
+          }).toList(),
+      'notes': myorder.notes,
+      'total_price': myorder.total_price,
+      'date': myorder.date,
+      'userid':user_id,
+      'location':myorder.location,
+      'customer_latitude':myorder.customer_latitude,
+      'customer_longitude':myorder.customer_longitude,
+      'customer_name':myorder.customer_name,
+      'order_status':'ongoing',
+      'sellerid':myorder.sellerid.toString()
+    };
+    print("ek baars");
+
+    CollectionReference collection =
+    FirebaseFirestore.instance.collection('Orders');
+    collection.add(data);
+
+  }
 }

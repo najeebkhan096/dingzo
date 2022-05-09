@@ -5,8 +5,11 @@ class MyUser {
   String ? location;
   String ? doc;
   String ? imageurl;
+  final List<MyUser> ? request;
+  final List<MyUser> ? friendlist;
 
-  MyUser({this.uid,this.email,this.username,this.location,this.doc,this.imageurl});
+
+  MyUser({this.uid,this.email,this.username,this.location,this.doc,this.imageurl,this.friendlist,this.request});
 
 }
 MyUser ? currentuser;

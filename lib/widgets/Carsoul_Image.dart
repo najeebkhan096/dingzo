@@ -8,28 +8,10 @@ Constants _const=Constants();
 class Carsoul_Image extends StatelessWidget {
 
 final bool ? sold;
-Carsoul_Image({required this.sold});
-
-  List categ=[
-    {
-      'image':"https://tse2.mm.bing.net/th?id=OIP.WfI7aMWbrc8NqxxDd0d7TQHaEy&pid=Api&P=0&w=255&h=165",
-      'title':"Shirts"
-    },
-    {
-      'image':"https://tse2.mm.bing.net/th?id=OIP.WfI7aMWbrc8NqxxDd0d7TQHaEy&pid=Api&P=0&w=255&h=165",
-      'title':"Hobby"
-    },
-    {
-      'image':"https://tse1.explicit.bing.net/th?id=OIP.uEW_6gBej6tDPbEQg4zMswHaE8&pid=Api&P=0&w=267&h=178",
-      'title':"Beauty"
-    },
-    {
-      'image':"https://tse3.mm.bing.net/th?id=OIP.o7FeDoDEgIrN7bA4r1mvNgHaE4&pid=Api&P=0&w=257&h=169",
-      'title':"Rooms"
-    },
+List<String> ? prodimages;
+Carsoul_Image({required this.sold,required this.prodimages});
 
 
-  ];
   int index=0;
   final controller = PageController(viewportFraction: 0.8, keepPage: true);
   @override
@@ -41,7 +23,7 @@ Carsoul_Image({required this.sold});
         children: [
           CarouselSlider(
               items:
-              categ.map((i) {
+              prodimages!.map((i) {
                 return Builder(
                   builder: (BuildContext context) {
                     return Container(
@@ -50,7 +32,7 @@ Carsoul_Image({required this.sold});
                       decoration: BoxDecoration(
                         image: DecorationImage(
                               fit: BoxFit.fill,
-                              image: NetworkImage(i['image'])
+                              image: NetworkImage(i)
                           )
                       ),
 
@@ -107,7 +89,7 @@ sold!?
             bottom: height*0.05,
             left: width*0.4,
             child: SmoothPageIndicator(
-              count: categ.length,
+              count: prodimages!.length,
               controller: controller,
               effect: WormEffect(
                 dotHeight: 16,

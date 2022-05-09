@@ -2,6 +2,7 @@ import 'package:dingzo/Database/database.dart';
 import 'package:dingzo/constants.dart';
 import 'package:dingzo/model/myclipper.dart';
 import 'package:dingzo/model/product.dart';
+import 'package:dingzo/screens/detailscreen.dart';
 import 'package:dingzo/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +36,7 @@ class Shirts_Screen extends StatelessWidget {
   ];
   String ? title='';
 
-  Database _database=Database();
+  ProductDatabase _database=ProductDatabase();
 
   @override
   Widget build(BuildContext context) {
@@ -159,49 +160,54 @@ class Shirts_Screen extends StatelessWidget {
                           itemCount: snapshot.data!.length,
                           itemBuilder: (context,index){
 
-                            return Container(
-                              margin: EdgeInsets.only(left: width*0.025),
-                              width: width*0.2,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color:Color(0xffEFB546),
-                              ),
-                              child: Column(
-                                children: [
-                                  Expanded(
+                            return InkWell(
+                              onTap: (){
+                                Navigator.of(context).pushNamed(DetailScreen.routename ,arguments: snapshot.data![index]);
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(left: width*0.025),
+                                width: width*0.2,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color:Color(0xffEFB546),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Expanded(
 
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                          image: DecorationImage(
-                                              fit: BoxFit.fill,
-                                              image: NetworkImage(snapshot.data![index].photos![0])
-                                          )
-                                      ),
-
-                                    ),
-                                    flex: 3,
-                                  ),
-                                  Expanded(
-
-                                    child: Container(
-                                      margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text("\$${snapshot.data![index].price}",style: _const.poppin_Regualr(12, FontWeight.w700),),
-                                          Icon(Icons.favorite_border,size: 14,)
-                                        ],
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                                fit: BoxFit.fill,
+                                                image: NetworkImage(snapshot.data![index].photos![0])
+                                            )
+                                        ),
 
                                       ),
+                                      flex: 3,
                                     ),
+                                    Expanded(
 
-                                    flex: 1,
-                                  )
+                                      child: Container(
+                                        margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("\$${snapshot.data![index].price}",style: _const.poppin_Regualr(12, FontWeight.w700),),
+                                            Icon(Icons.favorite_border,size: 14,)
+                                          ],
 
-                                ],
+                                        ),
+                                      ),
+
+                                      flex: 1,
+                                    )
+
+                                  ],
+                                ),
+                                height: height*0.05,
+
                               ),
-                              height: height*0.05,
-
                             );
 
                           }),
