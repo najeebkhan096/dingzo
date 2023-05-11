@@ -136,7 +136,7 @@ List categ=["Electronics","Beauty","Hobby","Men","Women","Women"];
           ),
         ),
       ),
-      bottomNavigationBar: Home_Bottom_Navigation_Bar(),
+
     );
   }
 }

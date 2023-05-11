@@ -1,20 +1,48 @@
+import 'dart:math';
+
+import 'package:dingzo/Address/location.dart';
+import 'package:dingzo/Database/product_database.dart';
+import 'package:dingzo/hometesting.dart';
+import 'package:dingzo/location/google_places_api.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dingzo/notificationservice/local_notification_service.dart';
+import 'package:dingzo/screens/mylikes.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:dingzo/screens/editaddress.dart';
+
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:dingzo/wrapper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dingzo/screens/checkout.dart';
+import 'package:dingzo/screens/home/search.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:dingzo/Database/database.dart';
+import 'package:dingzo/Database/payment.dart';
+import 'package:dingzo/Database/sellerdatabase.dart';
 import 'package:dingzo/constants.dart';
 import 'package:dingzo/model/myclipper.dart';
+import 'package:dingzo/model/product.dart';
+import 'package:dingzo/screens/detailscreen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:dingzo/model/myuser.dart';
-import 'package:dingzo/screens/cart.dart';
+import 'package:dingzo/model/order.dart';
 import 'package:dingzo/screens/categories.dart';
-import 'package:dingzo/screens/mylikes.dart';
-import 'package:dingzo/screens/newest.dart';
-import 'package:dingzo/screens/searchpage.dart';
-import 'package:dingzo/screens/shirts.dart';
 import 'package:dingzo/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 
 class HomeScreen extends StatefulWidget {
-  static const routename="HomeScreen";
+final  List<Product> all_products;
+final BannerAd ? banner;
+final bool ad_loaded;
+ List<Product> browse_products;
+HomeScreen({required this.all_products,required this.browse_products,required this.banner,required this.ad_loaded});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -23,393 +51,513 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Constants _const=Constants();
 
-List categ=[
-  {
-    'image':"images/icons8-shirt-64 1.png",
-    'title':"Music"
-  },
-  {
-    'image':"images/hobby icon.png",
-    'title':"Memorabilla"
-  },
-  // {
-  //   'image':"images/beauty care logo.png",
-  //   'title':"Beauty"
-  // },
-  // {
-  //   'image':"images/icons8-lamp-96 1.png",
-  //   'title':"Rooms"
-  // },
-  // {
-  //   'image':"images/icons8-lamp-96 1.png",
-  //   'title':"Rooms"
-  // }
 
-];
 
-bool fetched=false;
-Database _database=Database();
+
+  late AndroidNotificationChannel channel;
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
+  String? mtoken = "clDp0-WnStCc5nruahpEUI:APA91bFUuZ2LHNNcJE6TQyfdrNl9cKWryeHkNh95zQpLMQCGgwRYpza9JoGCf1BwubHOvF3SKvcLqa__Me4j4wuGS50AXeyKMC-sMcXmdxvTgOQdAv4pWM-fw8Tqpx2hpkRiy0vP8ePl";
 
 
 
 
-  @override
-  Future<void> didChangeDependencies() async {
-    // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
 
-    if(fetched==false){
 
-      await _database.fetchprofiledata(DesiredUserID: user_id).then((value) async{
-
-        currentuser=value;
-
-        user_docid=currentuser!.doc!;
-
-      });
-
-    }
-
-  }
 @override
   void initState() {
     // TODO: implement initState
-  current_index=0;
+
   super.initState();
   }
+
+
+  Future post_likes({required String post_id,required BuildContext context,List<Likes> ? likes}) async {
+
+
+    int targetindex=likes!.indexWhere((element) => element.userid==currentuser!.uid);
+
+    if(targetindex==-1){
+
+      likes.add(Likes(
+          userid: currentuser!.uid,
+          status: true
+      ));
+
+    }
+
+    else{
+
+      likes[targetindex]=Likes(
+          userid: currentuser!.uid,
+          status: !likes[targetindex].status!
+      );
+
+
+
+    }
+
+    CollectionReference collection =
+    FirebaseFirestore.instance.collection('Products');
+
+    await  collection.doc(post_id).set(
+        {
+          'likes':   likes.map((e) => {
+            'status':e.status,
+            'userid':e.userid
+          }).toList()
+        }
+
+        , SetOptions(merge: true)).then((value) {
+
+    }).then((value) {
+
+
+    });
+
+  }
+
+
+
+  List<dynamic> categs=[
+    {
+      'title':'All',
+      'status':true
+    },
+    {
+      'title':'Items for Rent',
+      'status':false
+    },
+    {
+      'title':'Items for Sale',
+      'status':false
+    },
+    {
+      'title':'My Likes',
+      'status':false
+    },
+
+  ];
+
+  bool fetched=false;
+Database _database=Database();
+
+SellerDatabase sellerDatabase=SellerDatabase();
+
+  Future refresh_products()async{
+
+
+    categs.forEach((element) {
+
+      if(element['title']=='Items for Rent'){
+        if(element['status']==true){
+          List<Product> newcategories=[];
+          widget.all_products.forEach((browse_element) {
+            if(browse_element.banner==true){
+
+            }
+            else{
+              if(browse_element.rent! && browse_element.distance!<currentuser!.filter_distance!){
+                newcategories.add(browse_element);
+              }
+            }
+
+          });
+
+          Random random = new Random();
+
+          int randomNumber = random.nextInt(newcategories.length==0?1:newcategories.length);
+          newcategories.insert(randomNumber,
+              Product(id: '', price: 11, title: '', quantity: 1,banner: true)
+
+          );
+          setState(() {
+            widget.browse_products=newcategories;
+
+          });
+
+
+        }
+
+      }
+
+      else if(element['title']=='Items for Sale'){
+
+
+
+        if(element['status']==true){
+          List<Product> newcategories=[];
+          widget.all_products.forEach((browse_element) {
+            if(browse_element.banner==true){
+
+            }
+            else{
+              if(browse_element.rent==false && browse_element.distance!<currentuser!.filter_distance!){
+                newcategories.add(browse_element);
+              }
+            }
+
+
+
+          });
+          Random random = new Random();
+          int randomNumber = random.nextInt(newcategories.length==0?1:newcategories.length);
+          newcategories.insert(randomNumber,
+              Product(id: '', price: 11, title: '', quantity: 1,banner: true)
+
+          );
+          setState(() {
+            widget.browse_products=newcategories;
+
+          });
+
+        }
+      }
+      else if(element['title']=='My Likes'){
+
+        if(element['status']==true){
+          List<Product> newcategories=[];
+          widget.all_products.forEach((element) {
+            if(element.banner==true){
+
+            }
+            else{
+              if(element.like_status==true){
+
+                newcategories.add(element);
+
+              }
+            }
+
+
+          }
+          );
+          Random random = new Random();
+          int randomNumber = random.nextInt(newcategories.length==0?1:newcategories.length);
+          newcategories.insert(randomNumber,
+              Product(id: '', price: 11, title: '', quantity: 1,banner: true)
+
+          );
+          setState(() {
+            widget.browse_products=newcategories;
+
+          });
+
+        }
+      }
+      else{
+        List<Product> templist=widget.all_products;
+templist.forEach((element) {
+  print(element.banner.toString());
+});
+setState(() {
+  widget.browse_products=templist;
+});
+      }
+
+    });
+
+
+
+
+
+
+  }
+
+
+
+
+
+
+
+
+
   @override
   Widget build(BuildContext context) {
     final width=MediaQuery.of(context).size.width;
     final height=MediaQuery.of(context).size.height;
-    return Scaffold(
-      backgroundColor: Colors.white,
 
-      body: SingleChildScrollView(
-        child: Container(
-          height: height*1.6,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: height*0.45,
-                width: width*1,
-                decoration: BoxDecoration(
-                    color:  Color(0xffFFEA9D),
-                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(40))
-                ),
-                child: Column(
+    return   currentuser==null?
+    Container(
+      height: height*1,
+      child: SpinKitCircle(
+        color: mycolor,
+      ),
+    )
+        :
+    SingleChildScrollView(
+      child: Container(
+        height:
+        height*1.18
+        ,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
 
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Row(
-                      children: [
+            Container(
+              margin: EdgeInsets.only(left: width*0.025,right: width*0.075),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      InkWell(
+                          onTap: (){
+                            Navigator.push(context, MaterialPageRoute(builder: (context){
+                              return GoogleMapsScreenApi();
+                            })).then((value) {
+                              setState(() {
 
-                        SizedBox(width: width*0.05,),
+                              });
+                            });
+                          },
+                          child: Image.asset("images/location.png",width: width*0.15,height: height*0.035,)),
+
+                      if(currentuser!.home_address!.length>0)
                         InkWell(
                           onTap: (){
-                         },
-                          child: Container(
-                            width: width*0.75,
-                            height: height*0.06,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(15)
-                            ),
-                          child: TextField(
-onTap: (){
-  Navigator.of(context).pushNamed(SearchPage.routename);
 
-},
-                            decoration: InputDecoration(
-                            hintText: "Search",
-                              border: InputBorder.none,
-                              prefixIcon: Icon(Icons.search,color: Colors.blue,)
-                            ),
-                          ),
-                          ),
-                        ),
-                        SizedBox(width: width*0.025,),
-                        InkWell(
-                            onTap: (){
-                              Navigator.of(context).pushNamed(CartScreen.routename);
+                            Navigator.push(context, MaterialPageRoute(builder: (context){
+                              return LocationScreen();
+                            })).then((value) {setState(() {
 
-                            },
-                            child: Image.asset('images/cart.png',))
-                      ],
-                    ),
-                    SizedBox(height: height*0.025,),
-                    Container(
-                      margin: EdgeInsets.only(left: width*0.05,right: width*0.05),
-                      height: height*0.25,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        image: DecorationImage(
-                          fit: BoxFit.fill,
-                          image: AssetImage("images/homeproduct.jpg")
+                            });});
+
+
+                          },
+                          child: Text(currentuser!.home_address!.first.address1!+" : ${currentuser!.filter_distance} miles" ,style: _const.raleway_regular_black(18, FontWeight.w600),
+                            textAlign: TextAlign.center,
+                          ),
                         )
-                      ),
-                    ),
-
-                    SizedBox(height: height*0.03,),
-                  ],
-                ),
-
-              ),
-
-SizedBox(height: height*0.025,),
-              Container(
-                margin: EdgeInsets.only(right: width*0.05),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(""),
-                    Text("Category",style: _const.poppin_light_brown(20, FontWeight.w600  ),)
-                  ,
-                    InkWell(
-                        onTap: (){
-                          Navigator.of(context).pushNamed(CategoriesScreen.routename);
-
-                        },
-                        child: Text("See all",style: _const.poppin_dark_brown(10, FontWeight.w600),))
-
-                  ],
-                ),
-              ),
-              SizedBox(height: height*0.025,),
-              Container(
-
-                height: height*0.14,
-                child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: List.generate(categ.length, (index) =>  InkWell(
-                      onTap: (){
-                        Navigator.of(context).pushNamed(Shirts_Screen.routename,arguments: categ[index]['title']);
-                      },
-                      child: Container(
-                        margin: EdgeInsets.only(left: width*0.05),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              height: height*0.1,
-                              width: width*0.15,
-                              decoration: BoxDecoration(
-                                  color: Color(0xffF9F6EC),
-                                  borderRadius: BorderRadius.circular(10),
-                                  image: DecorationImage(
-                                      image: AssetImage(categ[index]['image'])
-                                  )
-                              ),
-                            ),
-                            Text(categ[index]['title'],style: _const.poppin_dark_brown(10, FontWeight.w600),)
-                          ],
-                        ),
-                      ),
-                    ),)
-                ),
-              )
-          ,SizedBox(height: height*0.02,),
-              Container(
-                  margin: EdgeInsets.only(left: width*0.05),
-
-                  child: Text("My Likes",style: _const.poppin_dark_brown(20, FontWeight.w600  ),))
-              ,SizedBox(height: height*0.01,),
-
-
-              Container(
-                height: height*0.2,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: List.generate(8, (index) => InkWell(
-                    onTap: (){
-                      Navigator.of(context).pushNamed(MyLikes.routename);
-                    },
-                    child: Container(
-                      margin: EdgeInsets.only(left: width*0.025),
-                      width: width*0.3,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color:Color(0xffEFB546),
-
-
-                      ),
-                      child: Column(
-                        children: [
-                          Expanded(
-
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                      fit: BoxFit.fill,
-                                      image: AssetImage('images/categ.png')
-                                  )
-                              ),
-
-                            ),
-                            flex: 3,
-                          ),
-                          Expanded(
-
-                            child: Container(
-                              margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("\$20",style: _const.poppin_Regualr(12, FontWeight.w700),),
-                                  Icon(Icons.favorite_border,size: 14,)
-                                ],
-
-                              ),
-                            ),
-
-                            flex: 1,
-                          )
-
-                        ],
-                      ),
-                      height: height*0.2,
-
-                    ),
-                  ),),
-                ),
-              ),
-
-          SizedBox(height: height*0.02,),
-        Container(
-            margin: EdgeInsets.only(left: width*0.05),
-
-            child: Text("Recently Viewed",style: _const.poppin_dark_brown(20, FontWeight.w600  ),))
-        ,SizedBox(height: height*0.01,),
-
-
-        Container(
-          height: height*0.2,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: List.generate(8, (index) => Container(
-              margin: EdgeInsets.only(left: width*0.025),
-              width: width*0.3,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color:Color(0xffEFB546),
-
-
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-
-                    child: Container(
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                              fit: BoxFit.fill,
-                              image: AssetImage('images/categ.png')
-                          )
-                      ),
-
-                    ),
-                    flex: 3,
+                    ],
                   ),
-                  Expanded(
 
-                    child: Container(
-                      margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("\$20",style: _const.poppin_Regualr(12, FontWeight.w700),),
-                          Icon(Icons.favorite_border,size: 14,)
-                        ],
 
-                      ),
-                    ),
-
-                    flex: 1,
-                  )
 
                 ],
               ),
-              height: height*0.2,
+            ),
+            SizedBox(height: height*0.015,),
+            Container(
+              height: height*0.08,
 
-            ),),
-          ),
-        ),
+              child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: List.generate(categs.length, (index) =>  InkWell(
+                    onTap: (){
 
-              //newest
-          SizedBox(height: height*0.02,),
-        Container(
-            margin: EdgeInsets.only(left: width*0.05),
+                      for(int i=0;i<categs.length;i++){
+                        if(i==index){
+                          setState(() {
+                            categs[i]['status']=true;
+                          });
+                        }
+                        else{
+                          setState(() {
+                            categs[i]['status']=false;
+                          });
+                        }
+                      }
+                      refresh_products();
+                    },
+                    child: Container(
 
-            child: Text("Newest",style: _const.poppin_dark_brown(20, FontWeight.w600  ),))
-        ,SizedBox(height: height*0.01,),
+                      margin: EdgeInsets.only(left: width*0.05),
+                      child: Chip(
+                          side: BorderSide(
+                              color: categs[index]['status']?
+                              mycolor:
+                              Colors.black,
+                              width: 0.5
+                          ),
+                          padding: EdgeInsets.all(7),
+                          label: Text(categs[index]['title'],
+                            style: _const.raleway_1A5A47(12, FontWeight.w700),
+                          ),
 
-
-        Container(
-          height: height*0.2,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: List.generate(8, (index) => InkWell(
-              onTap: (){
-                Navigator.of(context).pushNamed(NewestPage.routename);
-
-              },
-              child: Container(
-                margin: EdgeInsets.only(left: width*0.025),
-                width: width*0.3,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color:Color(0xffEFB546),
-
-
-                ),
-                child: Column(
-                  children: [
-                    Expanded(
-
-                      child: Container(
-                        decoration: BoxDecoration(
-                            image: DecorationImage(
-                                fit: BoxFit.fill,
-                                image: AssetImage('images/categ.png')
-                            )
-                        ),
-
+                          backgroundColor:
+                          categs[index]['status']==true?
+                          mycolor:
+                          Colors.white
                       ),
-                      flex: 3,
                     ),
-                    Expanded(
-
-                      child: Container(
-                        margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("\$20",style: _const.poppin_Regualr(12, FontWeight.w700),),
-                            Icon(Icons.favorite_border,size: 14,)
-                          ],
-
-                        ),
-                      ),
-
-                      flex: 1,
-                    )
-
-                  ],
-                ),
-                height: height*0.2,
-
+                  ))
               ),
-            ),),
-          ),
-        ),
+            ),
 
 
 
-        ],
-          ),
+            (widget.browse_products.length==0 || widget.ad_loaded==false)?
+
+            Container(
+                width: width*1,
+                height: height*0.28,
+                child: Center(child: Text("No Product",style: _const.manrope_regular263238(12, FontWeight.w600),)))
+
+                :
+            Container(
+              height: height*0.8,
+              child:   GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      mainAxisSpacing: height*0.025,
+                      crossAxisCount: 3,
+                      mainAxisExtent: height*0.2
+
+                  ),
+
+                  itemCount: widget.browse_products.length,
+                  itemBuilder: (context,index){
+
+
+                    return
+
+                      widget.browse_products[index].banner==true?
+
+                      StatefulBuilder(
+                        builder: (context, setState)
+                        {
+                        ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+                          print("lund"+errorDetails.silent.toString());
+                        return Text("",
+                        style: TextStyle(
+                          fontSize: 11
+                        ),
+                        );
+                        };
+
+                        return Container(
+                          child: AdWidget(ad: widget.banner!),
+                          width: widget.banner!.size.width.toDouble(),
+                          height: 100.0,
+                          alignment: Alignment.center,
+                        );
+                        }
+
+                      )
+                          :
+
+
+                      Container(
+                        margin: EdgeInsets.only(left: width*0.025,right: width*0.025 ),
+                        width: width*0.2,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Expanded(
+
+                              child: InkWell(
+                                onTap: ()async{
+                                  await       productdatabase.update_views(
+                                      productid: widget.browse_products[index].product_doc_id,
+                                      views: widget.browse_products[index].views!+1
+                                  ).then((value) async{
+                                    await database.fetchprofiledata(DesiredUserID: widget.browse_products[index].sellerid).then((seller) {
+                                      widget.browse_products[index].seller=seller;
+                                      Navigator.of(context).pushNamed(DetailScreen.routename ,arguments: widget.browse_products[index]);
+                                    });
+                                  });
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      image: DecorationImage(
+                                          fit: BoxFit.fill,
+                                          image: NetworkImage(widget.browse_products[index].photos![0])
+                                      )
+                                  ),
+
+                                ),
+                              ),
+                              flex: 4,
+                            ),
+
+                            Expanded(
+
+                              child: Container(
+
+                                margin: EdgeInsets.only(left: width*0.015,right: width*0.015),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    widget.browse_products[index].rent!?
+                                    Text(widget.browse_products[index].title!.toString()+" For Rent",style: _const.raleway_regular_black(12, FontWeight.w700),):
+                                    Text(widget.browse_products[index].title!.toString()+" For Sale",style: _const.raleway_regular_black(12, FontWeight.w700),),
+
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("\$"+widget.browse_products[index].price!.toString(),style: _const.raleway_regular_black(12, FontWeight.w700),),
+                                        widget.browse_products[index].like_status! ?
+
+                                        InkWell(
+                                          onTap: ()async{
+
+                                            setState(() {
+                                              widget.browse_products[index].like_status=!widget.browse_products[index].like_status!;
+
+                                            });
+
+                                            await  post_likes(
+                                              post_id: widget.browse_products[index].id!,context: context,
+                                              likes:widget.browse_products[index].likes! ,
+
+                                            ).then((value) {
+                                              refresh_products();
+                                            });
+
+                                          },
+                                          child:   Icon(Icons.favorite,color: Colors.red,size: 16,),
+                                        ) :
+                                        InkWell(
+
+                                          onTap: ()async{
+
+                                            setState(() {
+                                              widget.browse_products[index].like_status=!widget.browse_products[index].like_status!;
+
+                                            });
+                                            refresh_products();
+                                            await  post_likes(
+                                              post_id: widget.browse_products[index].id!,context: context,
+                                              likes:widget.browse_products[index].likes! ,
+
+                                            ).then((value) {
+
+                                            });
+
+                                          },
+                                          child:   Icon(Icons.favorite_border,color: Colors.red,size: 16,),
+                                        ),
+
+                                      ],
+
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              flex: 2,
+                            )
+
+                          ],
+                        ),
+                        height: height*0.05,
+
+                      );
+
+                  }),
+            ),
+
+            SizedBox(height: height*0.02,),
+
+
+
+          ],
         ),
       ),
-    bottomNavigationBar: Home_Bottom_Navigation_Bar(),
     );
+
   }
 }

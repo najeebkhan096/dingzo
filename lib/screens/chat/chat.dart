@@ -1,6 +1,11 @@
 import 'package:dingzo/Database/SociaMediaDatabase.dart';
+import 'package:dingzo/Database/database.dart';
 import 'package:dingzo/constants.dart';
+import 'package:dingzo/hometesting.dart';
+import 'package:dingzo/model/chat_reciver.dart';
 import 'package:dingzo/model/myuser.dart';
+import 'package:dingzo/model/order.dart';
+import 'package:dingzo/screens/chat/TimeRequestChatBubble.dart';
 import 'package:dingzo/screens/chat/chat_bubble.dart';
 import 'package:dingzo/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,19 +27,11 @@ class Chat_Screen extends StatefulWidget {
   State<Chat_Screen> createState() => _Chat_ScreenState();
 }
 
-class _Chat_ScreenState extends State<Chat_Screen> {
+class _Chat_ScreenState extends State<Chat_Screen> with WidgetsBindingObserver {
   TextEditingController message = TextEditingController();
 
   Constants _const=Constants();
-  List<ChatMessage> messages_list=[
-    ChatMessage(message: "Hi",type: MessageType.Sender,userimage: "https://tse1.mm.bing.net/th?id=OIP.23gnJYIxRYyTnacDs2mUXQHaHa&pid=Api&P=0&w=176&h=176"),
-    ChatMessage(message: "Hello",type: MessageType.Receiver,userimage: "https://tse1.mm.bing.net/th?id=OIP.23gnJYIxRYyTnacDs2mUXQHaHa&pid=Api&P=0&w=176&h=176"),
-    ChatMessage(message: "How are you?",type: MessageType.Sender,userimage: "https://tse1.mm.bing.net/th?id=OIP.23gnJYIxRYyTnacDs2mUXQHaHa&pid=Api&P=0&w=176&h=176"),
-    ChatMessage(message: "Fine",type: MessageType.Receiver,userimage: "https://tse1.mm.bing.net/th?id=OIP.23gnJYIxRYyTnacDs2mUXQHaHa&pid=Api&P=0&w=176&h=176"),
-  ];
-  String chatid = '';
 
-  MyUser? user;
 
 
   void _showErrorDialog(BuildContext context) {
@@ -237,6 +234,7 @@ class _Chat_ScreenState extends State<Chat_Screen> {
         }
     );
   }
+
   @override
   void dispose() {
     // TODO: implement dispose
@@ -247,164 +245,348 @@ class _Chat_ScreenState extends State<Chat_Screen> {
   @override
   void initState() {
     // TODO: implement initState
-   current_index=3;
-    super.initState();
-  }
-  @override
-  Widget build(BuildContext context) {
-    print("step1");
-    final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
-    final List data= ModalRoute.of(context)!.settings.arguments as List;
-    try{
-      chatid=data[0];
-      user=data[1];
 
-    }catch(error){
+    super.initState();
+   WidgetsBinding.instance.addObserver(this);
+  }
+
+
+  @override
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed){
+      await database.update_online_status(status: true);
+
+
+
 
     }
 
+    else{
+     await  database.update_online_status(status: false);
+
+    }
+
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
+    ChatReciever chat_reciever= ModalRoute.of(context)!.settings.arguments as ChatReciever;
+
+
     return Scaffold(
-      backgroundColor: Color(0xffE5E5E5),
+      backgroundColor: Colors.white,
       body: //body
-      ListView(
-        children: [
-    Container(
-      height: height*0.86,
-      child: ListView(
-
-        children: [
-          //appbar
-          Container(
-            height: height*0.15,
-            width: width*1,
-            decoration: BoxDecoration(
-                color:  Color(0xffFFEA9D),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(40))
+      Container(
+        height: height*1,
+        child: Column(
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.04,
             ),
-            child: Column(
+            Container(
+              height: height*0.1,
+              width: width*1,
+              color: Colors.white,
+              margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
 
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(height: height*0.025,),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  Container(
+                    margin: EdgeInsets.only(left: width*0.05,right: width*0.025),
+                    child: IconButton(onPressed: (){
+                      Navigator.of(context).pop();
+
+                    }, icon: Icon(Icons.arrow_back_ios,color: Colors.black,)),
+                  ),
+
+
+
+                  Container(
+                    width: width*0.6,
+                    child: ListTile(
+
+                        leading:
+                            chat_reciever.user!.uid=="admin"?
+                            CircleAvatar(
+                                radius: 20,
+                                backgroundImage: NetworkImage("https://d2gg9evh47fn9z.cloudfront.net/1600px_COLOURBOX9896883.jpg")
+                            )
+                                :
+                        (chat_reciever.user!.imageurl==null || chat_reciever.user!.imageurl!.isEmpty )?
+                        CircleAvatar(
+                          radius: 20,
+                          child: Center(child: Text("No image",style: TextStyle(fontSize: 7),)),
+                        ):  CircleAvatar(
+                            radius: 20,
+                            backgroundImage: NetworkImage(chat_reciever.user!.imageurl!.toString())
+                        )
+                        ,
+                        title: Text(chat_reciever.user!.username.toString(),
+                          style: _const.manrope_regular263238(14, FontWeight.w600),
+                        ),
+                        subtitle:
+                        chat_reciever.user!.uid=='admin'?
+                        Text(
+                          "Online now"
+                          ,
+                          style:TextStyle(
+                              color: Color(0xff607D8B),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400
+                          ),
+                        ) :
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance.collection('Users').doc(chat_reciever.user!.doc!).snapshots(),
+                          builder: (context,status_snaps){
+                            if(status_snaps.connectionState==ConnectionState.waiting)
+                               { return Text("");}
+                            else if(status_snaps.hasData){
+                              Map ?targetuser;
+                              print("lund "+chat_reciever.user!.uid.toString());
+                              if(chat_reciever.user!.uid=='admin'){
+                                targetuser={'online':true};
+                              }
+                              else{
+                                targetuser=status_snaps.data!.data() as Map;
+                              }
+
+
+
+                              if(targetuser['online']){
+                                return   Text(
+                                  "Online now"
+                                  ,
+                                  style:TextStyle(
+                                      color: Color(0xff607D8B),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400
+                                  ),
+                                );
+                              }
+                              else {
+                                return   Text(
+                                  "Offline now"
+                                  ,
+                                  style:TextStyle(
+                                      color: Color(0xff607D8B),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400
+                                  ),
+                                );
+                              }
+                            }else{
+                              return  Text("");
+                            }
+
+                          },
+                        )
+
+
+
+                    ),
+                  ),
+Text("")
+                ],
+              ),
+            ),
+
+            Card(
+              color: Colors.white,
+              elevation: 10,
+              child: Container(
+                margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
+                padding: EdgeInsets.all(10),
+                child:   Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    InkWell(
-                      onTap: (){
-                        Navigator.of(context).pop();
-                      },
-                      child: CircleAvatar(
-                          radius: 15,
-                          backgroundColor: Colors.white,
-                          child:SvgPicture.asset('images/back.svg',height: height*0.025,)
+                    Container(
+                      margin: EdgeInsets.only(left: width*0.1,right: width*0.025),
+                      width: width*0.3,
+                      height: height*0.1,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          image: DecorationImage(
+                              fit: BoxFit.cover,
+                              image: NetworkImage(chat_reciever.product!.photos![0])
+                          )
                       ),
                     ),
 
-                    Text(user!.username.toString(),style: _const.raleway_extrabold(30, FontWeight.w800),),
+                    Container(
+                      width: width*0.3,
+                      margin: EdgeInsets.only(left: width*0.05,right: width*0.025),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(chat_reciever.product!.title!,style: _const.poppin_Regualr_2C2C2C(13, FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          SizedBox(height: height*0.01,),
+                          Text("\$${chat_reciever.product!.price}",style: _const.poppin_Regualr_2C2C2C(13, FontWeight.w600)),
 
 
-                    InkWell(
-                        onTap: (){
-                          _showErrorDialog(context);
-                        },
-                        child: Image.asset('images/cart.png',))
+                        ],
+                      ),
+                    ),
+
+
+
+
                   ],
                 ),
-
-                SizedBox(height: height*0.03,),
-              ],
+              ),
             ),
 
-          ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.02,
+            ),
 
 
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.02,
-          ),
+            //chat screen
 
-          //drawer row
+            Expanded(
+              child: Container(
 
-          //chat screen
+                child: StreamBuilder(
+                    stream: FirebaseFirestore.instance.
+                    collection("chatRoom")
+                        .doc(chat_reciever.chatid)
+                        .collection("chats")
+                        .orderBy('time')
+                        .snapshots(),
+                    builder: (BuildContext context,AsyncSnapshot<QuerySnapshot> snapshot){
+                      return snapshot.hasData?
 
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              StreamBuilder(
-                  stream: FirebaseFirestore.instance.
-                  collection("chatRoom")
-                      .doc(chatid)
-                      .collection("chats")
-                      .orderBy('time')
-                      .snapshots(),
-                  builder: (BuildContext context,AsyncSnapshot<QuerySnapshot> snapshot){
-                    return snapshot.hasData?
+                      ListView(
 
-                    Container(
+                        children: List.generate(snapshot.data!.docs.length, (index) {
+                          bool  ?timechange;
+                          DateTime ? expires_in;
+                          String ? status;
+                          DateTime ? pickupdate;
+                          try{
+                            status=snapshot.data!.docs[index]['status'];
+                            Timestamp stamp = snapshot.data!.docs[index]['expires_in'];
+                            expires_in=stamp.toDate();
 
-                      height: height * 0.445,
-                      width: width * 1,
-                      margin: EdgeInsets.only(
-                          left: width * 0.02,
-                          right: width * 0.02,
-                          top: width * 0.02,
-                          bottom: width * 0.02),
-                      child: SingleChildScrollView(
-                        child: Column(
+                            Timestamp pickupstamp = snapshot.data!.docs[index]['pickup_time']['date'];
+                           pickupdate= pickupstamp.toDate();
 
-                          children: List.generate(snapshot.data!.docs.length, (index) =>
-                              ChatBubble(
-                                chatMessage: ChatMessage(
-                                    userimage: '',
-                                    message: snapshot.data!.docs[index]['message'],
-                                    type:
-                                    snapshot.data!.docs[index]['SendBy']==user_id?
-                                    MessageType.Sender
-                                        :
-                                    MessageType.Receiver
+                            timechange=true;
 
-                                ),
-                              )
-                          ),
+                          }catch(error){
+                            print("ali baba ");
+                            timechange=false;
+                          }
+
+                          return   timechange==false?
+
+                          ChatBubble(
+                            chatMessage: ChatMessage(
+                                userimage: '',
+                                message: snapshot.data!.docs[index]['message'],
+                                type:
+                                snapshot.data!.docs[index]['SendBy']==user_id?
+                                MessageType.Sender
+                                    :
+                                MessageType.Receiver
+
+                            ),
+                          ):
+                          TimeRequestChatBubble(
+                            order_id: chat_reciever.product!.order_id,
+                            chatid: chat_reciever.chatid,
+                            docid: snapshot.data!.docs[index].id,
+                            chatMessage: TimeRequestChatMessage(
+
+                            expires_in: expires_in,
+
+                                time: DateTime.fromMillisecondsSinceEpoch(snapshot.data!.docs[index]['time']),
+                                status: status,
+                                picuptime: SchedulePickupTime(date: pickupdate, time: snapshot.data!.docs[index]['pickup_time']['time']),
+                                message: "Hello, unfortunatly I am not available at that date could you pick it up at this date instead? Thank you!",
+                                type:
+                                snapshot.data!.docs[index]['SendBy']==user_id?
+                                MessageType.Sender
+                                    :
+                                MessageType.Receiver
+
+                            ),
+                          );
+                        }
                         ),
+                      )
+
+                          :Text("no data");
+                    }),
+              ),
+            ),
+
+            Container(
+             height: height*0.1,
+
+              child: Row(
+                children: [
+
+                  Container(
+                    width: width*0.83,
+                    child: Card(
+                      color: Color(0xffECEFF1),
+                      margin: EdgeInsets.only(
+                          left: width * 0.075, right: width * 0.025),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      elevation: 10,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Container(
+                            width: width * 0.5,
+                            child: TextField(
+                                controller: message,
+                                decoration: InputDecoration(
+                                    border: InputBorder.none,
+                                    helperStyle: TextStyle(
+                                      color: Color(0xff78909C),
+                                      fontSize: 14,
+                                      fontFamily: 'Manrope-Regular'
+                                    ),
+                                    hintText: "Type your text..",
+                                    contentPadding: EdgeInsets.only(left: 20))),
+                          ),
+                          InkWell(
+                              onTap: () {
+
+                              },
+                              child: Icon(
+                                Icons.attach_file,
+                                color: Color(0xff546E7A),
+                              ))
+                        ],
                       ),
-                    )
+                    ),
+                  ),
 
-                        :Text("no data");
-                  }),
+                  InkWell(
+                    onTap: ()async{
+                      SocialMediaDatabase _socila_database=SocialMediaDatabase();
 
 
-            ],
-          ),
+                      if(chat_reciever.user!.uid=='admin'){
 
-        ],
-      ),
-    ),
+                      }
+                      else{
+                        await _socila_database.sendPushMessage(title: 'You have new message', body: message.text,
+                            token: chat_reciever.user!.deviceid);
 
-          Card(
-            color: Color(0xffFFEA9D),
-            margin: EdgeInsets.only(
-                left: width * 0.05, right: width * 0.05),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30)),
-            elevation: 10,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Container(
-                  width: width * 0.5,
-                  child: TextField(
-                      controller: message,
-                      decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: "Write a message here",
-                          contentPadding: EdgeInsets.only(left: 20))),
-                ),
-                InkWell(
-                    onTap: () {
-                      SocialMediaDatabase _database=SocialMediaDatabase();
-                      _database.addMessage(
-                          chatRoomId: chatid,
+                      }
+
+                     await  _socila_database.addMessage(
+                          chatRoomId: chat_reciever.chatid,
                           chatMessageData: {
                             'message': message.text,
                             'SendBy': user_id,
@@ -412,15 +594,25 @@ class _Chat_ScreenState extends State<Chat_Screen> {
                           }).then((value) {
                         message.clear();
                       });
+
+
+
+
+
                     },
-                    child: CircleAvatar(
-                      backgroundColor: Color(0xff8B6824),
-                      child: Image.asset('images/send.png'),
-                    ))
-              ],
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Color(0xffE6FCF5)
+                        ),
+                        child: Icon(Icons.send,color: mycolor,)),
+                  )
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

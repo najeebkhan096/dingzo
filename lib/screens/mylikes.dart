@@ -1,5 +1,6 @@
 import 'package:dingzo/constants.dart';
 import 'package:dingzo/model/myclipper.dart';
+import 'package:dingzo/model/product.dart';
 import 'package:dingzo/screens/detailscreen.dart';
 import 'package:dingzo/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,36 +10,29 @@ import 'package:flutter_svg/flutter_svg.dart';
 class MyLikes extends StatelessWidget {
   static const routename="MyLikes";
   Constants _const=Constants();
-  List categ=[
-    {
-      'image':"images/icons8-shirt-64 1.png",
-      'title':"Shirts"
-    },
-    {
-      'image':"images/hobby icon.png",
-      'title':"Hobby"
-    },
-    {
-      'image':"images/beauty care logo.png",
-      'title':"Beauty"
-    },
-    {
-      'image':"images/icons8-lamp-96 1.png",
-      'title':"Rooms"
-    },
-    {
-      'image':"images/icons8-lamp-96 1.png",
-      'title':"Rooms"
-    },
-
-  ];
+List<Product> products=[];
   @override
   Widget build(BuildContext context) {
     final width=MediaQuery.of(context).size.width;
     final height=MediaQuery.of(context).size.height;
+    products=ModalRoute.of(context)!.settings.arguments as List<Product>;
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 0.8,
 
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: Text("My Likes",style: _const.manrope_regular263238(20, FontWeight.w800)),
+
+        leading: IconButton(onPressed: (){
+          Navigator.of(context).pop();
+
+        }, icon: Icon(Icons.arrow_back_ios,color: Color(0xff3A4651),)),
+        actions: [
+
+        ],
+      ),
       body: SingleChildScrollView(
         child: Container(
           height: height*1.6,
@@ -46,70 +40,8 @@ class MyLikes extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              Container(
-                height: height*0.15,
-                width: width*1,
-                decoration: BoxDecoration(
-                    color:  Color(0xffFFEA9D),
-                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(40))
-                ),
-                child: Column(
-
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Container(
-
-                          child: CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.white,
-                              child:SvgPicture.asset('images/back.svg',height: height*0.025,)
-                          ),
-                        ),
-
-                        Text('MyLikes',style: _const.raleway_extrabold(30, FontWeight.w800),),
 
 
-                     Text("")
-                      ],
-                    ),
-
-                    SizedBox(height: height*0.03,),
-                  ],
-                ),
-
-              ),
-
-              SizedBox(height: height*0.025,),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Chip(
-                    backgroundColor: Color(0xffF9F6EC),
-                    label: Text("Save Search",style: _const.poppin_orange(15,FontWeight.w600),),
-                  ),
-                  SizedBox(width: width*0.05,),
-
-                  Chip(
-                    backgroundColor: Color(0xffF9F6EC),
-                    label: Text("Sort",style: _const.poppin_orange(15,FontWeight.w600),),
-                  ),
-                  SizedBox(width: width*0.05,),
-                  Chip(
-                    backgroundColor: Color(0xffF9F6EC),
-                    label: Row(
-                      children: [
-                        Text("filter",style: _const.poppin_orange(15,FontWeight.w600),),
-                        Icon(Icons.arrow_upward,color: Color(0xffEFB546),size: 13,)
-                      ],
-                    ),
-                  ),
-
-                ],
-              ),
               SizedBox(height: height*0.025,),
               Container(
                 height: height*0.8,
@@ -120,12 +52,12 @@ class MyLikes extends StatelessWidget {
                         mainAxisExtent: height*0.36
                     ),
 
-                    itemCount: 20,
+                    itemCount: products.length,
                     itemBuilder: (context,index){
 
                       return InkWell(
                         onTap: (){
-                          Navigator.of(context).pushNamed(DetailScreen.routename);
+                          Navigator.of(context).pushNamed(DetailScreen.routename ,arguments: products[index]);
                         },
                         child: Container(
                           margin: EdgeInsets.only(left: width*0.025,right: width*0.025),
@@ -145,7 +77,7 @@ class MyLikes extends StatelessWidget {
                                       decoration: BoxDecoration(
                                           image: DecorationImage(
                                               fit: BoxFit.fill,
-                                              image: AssetImage('images/categ.png')
+                                              image: NetworkImage(products[index].photos!.first)
                                           )
                                       ),
 
@@ -167,9 +99,9 @@ class MyLikes extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       SizedBox(height: height*0.01,),
-                                      Text("\$30",style: _const.raleway_SemiBold_9E772A(12, FontWeight.w700),),
+                                      Text("\$${products[index].price}",style: _const.raleway_SemiBold_9E772A(12, FontWeight.w700),),
 
-                                      Text("[space.room] Aestethic Concrete Vase",style: _const.raleway_medium_black(15, FontWeight.w500),)
+                                      Text(products[index].description!,style: _const.raleway_medium_black(15, FontWeight.w500),)
 
                                     ],
 
@@ -193,7 +125,7 @@ class MyLikes extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: Home_Bottom_Navigation_Bar(),
+
     );
   }
 }

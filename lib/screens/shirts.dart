@@ -1,4 +1,5 @@
 import 'package:dingzo/Database/database.dart';
+import 'package:dingzo/Database/product_database.dart';
 import 'package:dingzo/constants.dart';
 import 'package:dingzo/model/myclipper.dart';
 import 'package:dingzo/model/product.dart';
@@ -43,6 +44,7 @@ class Shirts_Screen extends StatelessWidget {
     final width=MediaQuery.of(context).size.width;
     final height=MediaQuery.of(context).size.height;
     title=ModalRoute.of(context)!.settings.arguments as String;
+
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -138,7 +140,7 @@ class Shirts_Screen extends StatelessWidget {
                 ],
               ),
               FutureBuilder(
-                future: _database.fetch_products(title: title),
+                future: _database.fetch_all_for_sale_products_by_Title(title: title),
                 builder: (BuildContext context,AsyncSnapshot<List<Product>> snapshot){
                   return
                     snapshot.connectionState==ConnectionState.waiting?SpinKitRotatingCircle(
@@ -230,7 +232,7 @@ class Shirts_Screen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: Home_Bottom_Navigation_Bar(),
+
     );
   }
 }

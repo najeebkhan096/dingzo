@@ -49,7 +49,7 @@ class Welcome extends StatelessWidget {
 
                   InkWell(
                     onTap: (){
-                      Navigator.of(context).pushNamed(Wrapper.routename);
+                      Navigator.of(context).pushNamedAndRemoveUntil(Wrapper.routename, (route) => false);
 
                     },
                     child: Container(

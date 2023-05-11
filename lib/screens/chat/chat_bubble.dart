@@ -13,7 +13,6 @@ class _ChatBubbleState extends State<ChatBubble> {
   Widget build(BuildContext context) {
     final height=MediaQuery.of(context).size.height;
     final width=MediaQuery.of(context).size.width;
-    print("jaanu"+widget.chatMessage.userimage.toString());
 
     return Container(
       padding: EdgeInsets.only(left: 16,right: 16,top: 10,bottom: 10),
@@ -22,30 +21,16 @@ class _ChatBubbleState extends State<ChatBubble> {
           child: widget.chatMessage.type == MessageType.Receiver?
           Container(
 
-            child: Row(
-              children: [
-                (widget.chatMessage.userimage==null || widget.chatMessage.userimage.isEmpty )?
+            child: Container(
+              margin: EdgeInsets.only(left: width*0.025),
+              decoration:
+              BoxDecoration(borderRadius: BorderRadius.circular(20),
+                  color: Color(0xffECEFF1)
 
-                CircleAvatar(
-                  radius: 27,
-                  child: Center(child: Text("No image",style: TextStyle(fontSize: 10),)),
-                ):  CircleAvatar(
-                    radius: 27,
-                    backgroundImage: NetworkImage(widget.chatMessage.userimage.toString())
-                )
-                ,
-                Container(
-                  margin: EdgeInsets.only(left: width*0.025),
-                  decoration:
-                  BoxDecoration(borderRadius: BorderRadius.circular(20),
-                      color: Colors.white
+              ),
+              padding: EdgeInsets.only(left: width*0.05,right: width*0.05,bottom: height*0.025,top: height*0.025),
+              child: Text(widget.chatMessage.message.toString(),style: _const.manrope_regular263238(13, FontWeight.w600)),
 
-                  ),
-                  padding: EdgeInsets.only(left: width*0.05,right: width*0.05,bottom: height*0.025,top: height*0.025),
-                  child: Text(widget.chatMessage.message.toString(),style: _const.raleway_semi_444444(13, FontWeight.w600)),
-
-                ),
-              ],
             ),
           ):
 
@@ -58,24 +43,14 @@ class _ChatBubbleState extends State<ChatBubble> {
 
                   decoration:
                   BoxDecoration(borderRadius: BorderRadius.circular(20),
-                      color: Color(0xffFFEA9D)
+                      color: mycolor,
 
                   ),
                   padding: EdgeInsets.only(left: width*0.05,right: width*0.05,bottom: height*0.025,top: height*0.025),
-                  child: Text(widget.chatMessage.message.toString(),style: _const.raleway_semi_444444(13, FontWeight.w600)),
+                  child: Text(widget.chatMessage.message.toString(),style: _const.manrope_regularwhite(13, FontWeight.w600)),
 
                 ),
 
-                (widget.chatMessage.userimage==null || widget.chatMessage.userimage.isEmpty )?
-
-                CircleAvatar(
-                  radius: 27,
-                  child: Center(child: Text("No image",style: TextStyle(fontSize: 10),)),
-                ):
-                CircleAvatar(
-                    radius: 27,
-                    backgroundImage: NetworkImage(widget.chatMessage.userimage.toString())
-                ),
               ],
             ),
           )

@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'package:dingzo/constants.dart';
-import 'package:dingzo/screens/selling/NewShipped.dart';
-import 'package:dingzo/screens/selling/completed.dart';
+
 import 'package:dingzo/screens/selling/Rating.dart';
-import 'package:dingzo/screens/selling/shipped.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';

@@ -1,8 +1,12 @@
+import 'package:geolocator/geolocator.dart';
 import 'package:dingzo/Database/auth.dart';
 import 'package:dingzo/Database/database.dart';
 import 'package:dingzo/constants.dart';
+import 'package:dingzo/location/geo_location.dart';
 import 'package:dingzo/model/myuser.dart';
+import 'package:dingzo/model/work_address.dart';
 import 'package:dingzo/screens/SelectCategory.dart';
+import 'package:dingzo/screens/finish.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:dingzo/screens/categories.dart';
 import 'package:dingzo/screens/home.dart';
@@ -49,11 +53,9 @@ bool _switch=false;
 
   AuthService _auth = AuthService();
 
-
+   WorkerAddress ? useraddress;
   File ? myfile;
   String ? QRImage;
-
-
 
   cloudstore.
   CollectionReference ? imgRef;
@@ -75,41 +77,54 @@ bool isloading=false;
     });
 
 
-print("our email is "+email.toString()+pass.toString());
-      final User user = await _auth.registerWithEmailAndPassword(email!, pass!);
+try{
+  final User user = await _auth.registerWithEmailAndPassword(email!, pass!);
 
 
-      setState(() {
-        currentuserid=user.uid;
-      });
 
-      user.updateDisplayName(username);
+  setState(() {
+    currentuserid=user.uid;
+  });
 
-      final result=await _database.adduser(userid: currentuserid,name: username,email: email,imageurl: "").then((value) async {
-        docid=value.toString();
-        Fluttertoast.showToast(
-            msg: "Account is Created",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0
-        );
-        setState(() {
-          isloading=false;
-        });
+await  user.updateDisplayName(username);
 
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-                builder: (BuildContext context) => SelectCategory()),
-                (route)=>false
-        );
+  final result=await _database.adduser(
+  useraddress:
+  useraddress,
+      userid: currentuserid,name: username,email: email,imageurl: "").then((value) async {
 
-      });
+    docid=value.toString();
 
-      print("irfan kon i da"+docid.toString());
+    Fluttertoast.showToast(
+        msg: "Account is Created",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+
+    setState(() {
+      isloading=false;
+    });
+
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => FinishScreen()),
+            (route)=>false
+    );
+
+  });
+
+}catch(error){
+  setState(() {
+    isloading=false;
+  });
+
+  _showErrorDialog(error.toString());
+}
 
 
   }
@@ -120,7 +135,7 @@ print("our email is "+email.toString()+pass.toString());
           title: Text('An Error Occured'),
           content: Text(msg),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text('Okay'),
               onPressed: () {
                 Navigator.of(ctx).pop();
@@ -140,184 +155,160 @@ print("our email is "+email.toString()+pass.toString());
       body: Container(
 
         height: height*1,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Container(
+        child: Container(
 
-              child: ListView(
-                children: [
-                  Row(
+          child: ListView(
+            children: [
+              SizedBox(height: height*0.1,),
+              Center(child: Text("Sign up",style: _const.poppin_BlackBold(40, FontWeight.w700),))
+              ,
+              SizedBox(height: height*0.025,),
+              Form(
+
+                  key:_formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(onPressed: (){
-                        Navigator.of(context).pop();
-                      },
-                        icon: Icon(Icons.arrow_back,
-                          color: Color.fromRGBO(0, 0, 0, 0.5),
-                          size: 18,),
-                      ),
-                      Container(
-                        height: height*0.2,
-                        width: width*0.75,
-                        decoration: BoxDecoration(
 
-                            image: DecorationImage(
-                                image: AssetImage("images/dollaricon.png")
-                            )
+                      //username
+
+                      Container(
+                          margin: EdgeInsets.only(left: width*0.07),
+                          child: Text('Username',style: _const.poppin_Regualr(15, FontWeight.w400),)),
+                      SizedBox(height: height*0.015,),
+                      Container(
+                        height: height*0.07,
+                        width: width*1,
+                        margin: EdgeInsets.only(left: width*0.05,right: width*0.05),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Color(0xffE5E5E5)),
+                            borderRadius: BorderRadius.circular(10)
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12.0),
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                                hintText: 'Enter Username ',
+                                border: InputBorder.none,
+
+                                hintStyle:  _const.poppin_brown_textfield(14, FontWeight.w600)
+                            ),
+                            keyboardType:
+                            TextInputType.emailAddress,
+
+                            onSaved: (value){
+
+                                username=value!;
+
+                            },
+                            validator: (value){
+                              if(value!.isEmpty){
+                                return 'invalid';
+                              }
+                              return null;
+
+                            },
+                          ),
                         ),
                       ),
-                      Text("")
-                    ],
-                  ),
+                      SizedBox(height: height*0.02,),
 
-                  Center(child: Text("Hello",style: _const.poppin_SemiBold(20, FontWeight.w700),))
-                  ,
-                  SizedBox(height: height*0.025,),
-                  Form(
 
-                      key:_formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                      //email
 
-                          //username
+                      Container(
+                          margin: EdgeInsets.only(left: width*0.07),
+                          child: Text('Email',style: _const.poppin_Regualr(15, FontWeight.w400),)),
+                      SizedBox(height: height*0.015,),
 
-                          Container(
-                              margin: EdgeInsets.only(left: width*0.07),
-                              child: Text('Username',style: _const.poppin_brown(10, FontWeight.w400),)),
-                          SizedBox(height: height*0.015,),
-                          Container(
-                            height: height*0.07,
-                            width: width*1,
-                            margin: EdgeInsets.only(left: width*0.05,right: width*0.05),
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Color(0xffE5E5E5)),
-                                borderRadius: BorderRadius.circular(10)
+                      Container(
+                        height: height*0.07,
+                        margin: EdgeInsets.only(left: width*0.05,right: width*0.05),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Color(0xffE5E5E5)),
+                            borderRadius: BorderRadius.circular(10)
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12.0),
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                                hintText: 'Enter Email ',
+                                border: InputBorder.none,
+                                hintStyle:  _const.poppin_brown_textfield(14, FontWeight.w600)
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 12.0),
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                    hintText: 'Enter Username ',
-                                    border: InputBorder.none,
-                                    hintStyle:  _const.poppin_brown_textfield(14, FontWeight.w600)
-                                ),
-                                keyboardType:
-                                TextInputType.emailAddress,
+                            keyboardType:
+                            TextInputType.emailAddress,
 
-                                onSaved: (value){
+                            onSaved: (value){
 
-                                    username=value!;
-
-                                },
-                                validator: (value){
-                                  if(value!.isEmpty){
-                                    return 'invalid';
-                                  }
-                                  return null;
-
-                                },
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: height*0.02,),
-
-
-                          //email
-
-                          Container(
-                              margin: EdgeInsets.only(left: width*0.07),
-                              child: Text('Email',style: _const.poppin_brown(10, FontWeight.w400),)),
-                          SizedBox(height: height*0.015,),
-
-                          Container(
-                            height: height*0.07,
-                            margin: EdgeInsets.only(left: width*0.05,right: width*0.05),
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Color(0xffE5E5E5)),
-                                borderRadius: BorderRadius.circular(10)
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 12.0),
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                    hintText: 'Enter Email ',
-                                    border: InputBorder.none,
-                                    hintStyle:  _const.poppin_brown_textfield(14, FontWeight.w600)
-                                ),
-                                keyboardType:
-                                TextInputType.emailAddress,
-
-                                onSaved: (value){
-
-                                    email=value;
+                                email=value;
 print("value is "+email.toString());
-                                },
-                                validator: (value){
-                                  if(value!.isEmpty){
-                                    return 'invalid';
-                                  }
-                                  return null;
+                            },
+                            validator: (value){
+                              if(value!.isEmpty){
+                                return 'invalid';
+                              }
+                              return null;
 
-                                },
-                              ),
-                            ),
+                            },
                           ),
+                        ),
+                      ),
 
 
 
-                          SizedBox(height: height*0.02,),
+                      SizedBox(height: height*0.02,),
 
 
 
-                          //pass
+                      //pass
 
-                          Container(
-                              margin: EdgeInsets.only(left: width*0.07),
-                              child: Text('Password',style: _const.poppin_brown(10, FontWeight.w400),)),
-                          SizedBox(height: height*0.015,),
+                      Container(
+                          margin: EdgeInsets.only(left: width*0.07),
+                          child: Text('Password',style: _const.poppin_Regualr(15, FontWeight.w400),)),
+                      SizedBox(height: height*0.015,),
 
-                          Container(
-                            height: height*0.07,
-                            margin: EdgeInsets.only(left: width*0.05,right: width*0.05),
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Color(0xffE5E5E5)),
-                                borderRadius: BorderRadius.circular(10)
+                      Container(
+                        height: height*0.07,
+                        margin: EdgeInsets.only(left: width*0.05,right: width*0.05),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Color(0xffE5E5E5)),
+                            borderRadius: BorderRadius.circular(10)
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12.0),
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                                hintText: 'Enter Password ',
+                                border: InputBorder.none,
+                                hintStyle:  _const.poppin_brown_textfield(14, FontWeight.w600)
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 12.0),
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                    hintText: 'Enter Password ',
-                                    border: InputBorder.none,
-                                    hintStyle:  _const.poppin_brown_textfield(14, FontWeight.w600)
-                                ),
-                                keyboardType:
-                                TextInputType.emailAddress,
+                            keyboardType:
+                            TextInputType.emailAddress,
 
-                                onSaved: (value){
+                            onSaved: (value){
 
-                                    pass=value;
+                                pass=value;
 
-                                },
-                                validator: (value){
-                                  if(value!.isEmpty){
-                                    return 'invalid';
-                                  }
-                                  return null;
+                            },
+                            validator: (value){
+                              if(value!.isEmpty){
+                                return 'invalid';
+                              }
+                              return null;
 
-                                },
-                              ),
-                            ),
+                            },
                           ),
+                        ),
+                      ),
 
-                          SizedBox(height: height*0.02,),
+                      SizedBox(height: height*0.02,),
 
 Container(
-  margin: EdgeInsets.only(left: width*0.02,right: width*0.02),
+  margin: EdgeInsets.only(left: width*0.075,right: width*0.075),
   child:   Row(
 
     mainAxisAlignment: MainAxisAlignment.start,
@@ -328,9 +319,9 @@ Container(
 
       Switch(
 
-          activeColor: Color(0xffEAD898),
+          activeColor: mylightcolor,
 
-          activeTrackColor:Color(0xffEFB546) ,
+          activeTrackColor:mycolor,
 
           value: _switch, onChanged: (val){
 
@@ -342,36 +333,56 @@ Container(
 
       }),
 
-          Container(
 
-            width: width*0.75,
+          Expanded(
 
-            child: Text.rich(
-
-            TextSpan(
+            child: Container(
 
 
 
-              style: _const.poppin_brown(12, FontWeight.w100),
+        child: Text.rich(
 
-                text: 'By signing up or loggin in, you agree to our',
-                children: <InlineSpan>[
+        TextSpan(
 
-                  TextSpan(
-                    text: ' Terms of Service and Privacy Policy',
 
-                    style: _const.poppin_Regualr(12, FontWeight.w300),
 
-                  )
+            style: _const.poppin_Regualr(12, FontWeight.w400),
 
-                ]
+              text: 'By signing up or loggin in, you agree to our',
+              children: <InlineSpan>[
 
-            )
+                TextSpan(
+                  text: ' Terms of Service ',
+
+                  style: _const.poppin_mycolor(12, FontWeight.w300),
+
+                ),
+
+
+                TextSpan(
+                  text: 'and ',
+
+                  style: _const.poppin_Regualr(12, FontWeight.w400),
+
+                )
+                ,
+                TextSpan(
+                  text: 'Privacy Policy',
+
+                  style: _const.poppin_mycolor(12, FontWeight.w300),
+
+                )
+
+
+              ]
+
+        )
 
 
 
       ),
 
+            ),
           ),
 
     ],
@@ -380,45 +391,46 @@ Container(
 ),
 
 
-                        ],
+                    ],
 
-                      )),
-                  SizedBox(height: height*0.025,),
-                _switch?
-                isloading?SpinKitRotatingCircle(
-                  color: Colors.black,
-                  size: 50.0,
-                ):
-                  InkWell(
-                    onTap: (){
-                      // Navigator.of(context).pushNamed(SelectCategory.routename);
-_submit();
-                      },
-                    child: Container(
-                      height: height*0.055,
+                  )),
+              SizedBox(height: height*0.025,),
+            _switch?
+            isloading?SpinKitRotatingCircle(
+              color: mycolor,
+              size: 50.0,
+            ):
+              InkWell(
+                onTap: ()async{
+                  // Navigator.of(context).pushNamed(SelectCategory.routename);
+                  try{
+                    MyGeolocation _location=MyGeolocation();
+                    Position data=await _location
+                        .determinePosition();
+                    print(data.toString());
+                    String _loc = await _location
+                        .GetAddressFromLatLong(data);
 
-                      margin: EdgeInsets.only(left: MediaQuery.of(context).size.width*0.25,right: MediaQuery.of(context).size.width*0.25,),
+if(_loc.isNotEmpty){
+useraddress=WorkerAddress(
+  address_txt:_loc ,
+  latitude: data.latitude,
+  longitude:data.longitude
+);
+  _submit();
+}
+                  }catch(error){
+                    _showErrorDialog(error.toString());
+                  }
 
-                      decoration: BoxDecoration(
-                        color: Color(0xffEFB546),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Center(
-                        child: Text(
-                            'Sign up',
-                            style: _const.poppin_white(18, FontWeight.w600)
-                        ),
-                      ),
-                    ),
-                  ):
-
-                Container(
+                  },
+                child: Container(
                   height: height*0.055,
 
                   margin: EdgeInsets.only(left: MediaQuery.of(context).size.width*0.25,right: MediaQuery.of(context).size.width*0.25,),
 
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.7),
+                    color: blackbutton,
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Center(
@@ -428,39 +440,26 @@ _submit();
                     ),
                   ),
                 ),
-                ],
+              ):
+
+            Container(
+              height: height*0.055,
+
+              margin: EdgeInsets.only(left: MediaQuery.of(context).size.width*0.25,right: MediaQuery.of(context).size.width*0.25,),
+
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Center(
+                child: Text(
+                    'Sign up',
+                    style: _const.poppin_white(18, FontWeight.w600)
+                ),
               ),
             ),
-
-
-            Positioned(
-                right: 0,
-                top: 0,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SvgPicture.asset('images/right.svg',
-                      height: height*0.2,fit: BoxFit.fill,
-                    ),
-                    Positioned(
-                        right: width*0.028,
-                        child: IconButton(onPressed: (){},
-                            icon: Icon(Icons.share,
-                              color: Color.fromRGBO(0, 0, 0, 0.5),
-                              size: 18,),
-                        ),
-                    ),
-
-                  ]
-                  ,
-                )),
-
-            Positioned(
-                bottom: 0,
-                left: 0,
-                child: SvgPicture.asset('images/left.svg',height: height*0.2,)),
-
-          ],
+            ],
+          ),
         ),
 
       ),

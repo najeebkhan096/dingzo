@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:dingzo/constants.dart';
-import 'package:dingzo/screens/buying/NewShipped.dart';
-import 'package:dingzo/screens/buying/completed.dart';
-import 'package:dingzo/screens/buying/rating.dart';
-import 'package:dingzo/screens/buying/shipped.dart';
-import 'package:dingzo/screens/order/InProgress.dart';
+import 'package:dingzo/screens/BuyerOrder/InProgress.dart';
+import 'package:dingzo/screens/BuyerOrder/completed.dart';
+import 'package:dingzo/screens/buying/Buyer_Rent_Order/pickup.dart';
+import 'package:dingzo/screens/buying/Buyer_Rent_Order/completed.dart';
+import 'package:dingzo/screens/buying/Buyer_Rent_Order/rating.dart';
+import 'package:dingzo/screens/buying/Buyer_Rent_Order/in_use.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -18,6 +20,7 @@ class BuyingHomePage extends StatefulWidget {
 
 class _BuyingHomePageState extends State<BuyingHomePage>  with SingleTickerProviderStateMixin{
   @override
+
   Color active = Colors.green;
   Color inactive = Color(0xffF9F9F9);
   bool isrecieved = true;
@@ -147,7 +150,7 @@ class _BuyingHomePageState extends State<BuyingHomePage>  with SingleTickerProvi
 
     super.initState();
 
-    _controller = TabController(length: 4, vsync: this);
+    _controller = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -163,53 +166,31 @@ class _BuyingHomePageState extends State<BuyingHomePage>  with SingleTickerProvi
     final width = MediaQuery.of(context).size.width;
     return SafeArea(
         child: DefaultTabController(
-          length: 4,
+          length: 2,
           child: Scaffold(
             backgroundColor: Colors.white,
+            appBar: AppBar(
+              elevation: 0.8,
+              leadingWidth: width*0.3
+              ,
+              backgroundColor: Colors.white,
+              centerTitle: true,
+              title: Text("Buying",style: _const.manrope_regular263238(20, FontWeight.w800)),
+              leading: IconButton(onPressed: (){
+                Navigator.of(context).pop();
 
+              }, icon: Icon(Icons.arrow_back_ios,color: Color(0xff3A4651),)),
+              actions: [
+
+              ],
+            ),
             body: SingleChildScrollView(
               child: Container(
                 height: height*1,
                 child: Column(
 
                   children: [
-                    Container(
-                      height: height*0.15,
-                      width: width*1,
-                      decoration: BoxDecoration(
-                          color:  Color(0xffFFEA9D),
-                          borderRadius: BorderRadius.vertical(bottom: Radius.circular(40))
-                      ),
-                      child: Column(
 
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              CircleAvatar(
-                                backgroundColor:  Colors.white,
-                                child: SvgPicture.asset('images/back.svg',height: height*0.025,),
-                              ),
-
-                              Text(""),
-
-                              InkWell(
-                                  onTap: (){
-                  _showModalSheet();
-                                  },
-                                  child: Image.asset('images/cart.png',))
-                            ],
-                          ),
-
-                          SizedBox(height: height*0.03,),
-
-
-
-                        ],
-                      ),
-
-                    ),
                     SizedBox(height: height*0.025,),
 
                     Container(
@@ -220,10 +201,10 @@ class _BuyingHomePageState extends State<BuyingHomePage>  with SingleTickerProvi
                       child: TabBar(
                         padding: EdgeInsets.only(top: 5, bottom: 5),
                         indicator: BoxDecoration(
-                            color: Color(0xffEFB546),
+                            color: mycolor,
                             borderRadius: BorderRadius.circular(10)),
                         labelColor: Colors.white,
-                        unselectedLabelColor: Color(0xffEFB546),
+                        unselectedLabelColor: Color(0xff333333),
                         indicatorColor: Color(0xff722BFF),
                         indicatorSize: TabBarIndicatorSize.tab,
                         labelStyle: _const.raleway_SemiBold_brown(12, FontWeight.w600),
@@ -233,31 +214,31 @@ class _BuyingHomePageState extends State<BuyingHomePage>  with SingleTickerProvi
                         controller: _controller,
                         tabs: [
 
-                          Tab(
-                            child: // Adobe XD layer: 'Emergency (6)' (text)
-                            Text(
-                              'NewShipped',
+                          Container(
+                            width: width*0.22,
+                            child: Tab(
+                              child: // Adobe XD layer: 'Emergency (6)' (text)
+                              Center(
+                                child: Text(
+                                  'In Progress',
+                                ),
+                              ),
                             ),
                           ),
 
                           Tab(
                             child: // Adobe XD layer: 'Second Opinion' (text)
-                            Text(
-                              'Shipped',
+                            Container(
+                              width: width*0.22,
+                              child: Center(
+                                child: Text(
+                                  'Completed',
+                                ),
+                              ),
                             ),
                           ),
-                          Tab(
-                            child: // Adobe XD layer: 'Second Opinion' (text)
-                            Text(
-                              'Ratting',
-                            ),
-                          ),
-                          Tab(
-                            child: // Adobe XD layer: 'Second Opinion' (text)
-                            Text(
-                              'Completed',
-                            ),
-                          ),
+
+
                         ],
                       ),
                     ),
@@ -265,14 +246,11 @@ class _BuyingHomePageState extends State<BuyingHomePage>  with SingleTickerProvi
                       child: TabBarView(
                         controller: _controller,
                         children: [
-                          //pending
 
-                          NewShipped(),
 
-                          Shipped(),
-                          Rating(),
+                          BuyerInProgress(),
+                          BuyerCompleted()
 
-                          Completed()
                         ],
                       ),
                     ),

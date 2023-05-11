@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:dingzo/constants.dart';
-import 'package:dingzo/screens/order/InProgress.dart';
-import 'package:dingzo/screens/order/completed.dart';
+import 'package:dingzo/screens/BuyerOrder/InProgress.dart';
+import 'package:dingzo/screens/BuyerOrder/completed.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -138,9 +139,9 @@ class _User_Order_ScreenState extends State<User_Order_Screen>  with SingleTicke
                         children: [
                           //pending
 
-                        InProgress(),
+                        BuyerInProgress(),
 
-                          Completed()
+                          BuyerCompleted()
 
                         ],
                       ),

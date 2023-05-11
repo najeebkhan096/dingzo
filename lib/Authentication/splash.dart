@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dingzo/constants.dart';
 import 'package:dingzo/Authentication/signup_welcome.dart';
 import 'package:dingzo/screens/welcome.dart';
+import 'package:dingzo/wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -19,7 +20,7 @@ class _Splash_ScreenState extends State<Splash_Screen> {
   void initState() {
     // TODO: implement initState
   Timer(Duration(seconds: 5), (){
-    Navigator.of(context).pushNamed(Welcome.routename);
+    Navigator.of(context).pushNamedAndRemoveUntil(Wrapper.routename, (route) => false);
   });
   super.initState();
   }

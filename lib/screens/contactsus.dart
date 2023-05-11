@@ -93,7 +93,7 @@ Center(child: Text("Contact Us",style: _const.raleway_extrabold(27, FontWeight.w
 
         ],
       ),
-      bottomNavigationBar: Home_Bottom_Navigation_Bar(),
+
     );
   }
 }

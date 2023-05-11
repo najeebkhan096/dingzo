@@ -114,7 +114,7 @@ child: Text('You have just listed your first item!',style: _const.raleway_SemiBo
 
         ],
       ),
-      bottomNavigationBar: Home_Bottom_Navigation_Bar(),
+
     );
   }
 }

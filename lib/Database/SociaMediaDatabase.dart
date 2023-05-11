@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:dingzo/Database/chatGroup.dart';
 import 'package:dingzo/model/myuser.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:http/http.dart' as http;
 class SocialMediaDatabase{
   Future<void> addMessage(
       {String? chatRoomId, Map<String, dynamic>? chatMessageData}) async {
@@ -17,6 +19,21 @@ class SocialMediaDatabase{
     });
   }
 
+  Future<void> updateMessage(
+      {String? chatRoomId, String ? status,
+      String ? docid
+      }) async {
+    FirebaseFirestore _intsance = FirebaseFirestore.instance;
+    _intsance
+        .collection("chatRoom")
+        .doc(chatRoomId)
+        .collection("chats").doc(docid).update({
+      'status':status
+    })
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
 
   Future<List<ChatGroup>> fetchGroup() async {
     List<ChatGroup> _post = [];
@@ -123,7 +140,7 @@ class SocialMediaDatabase{
 
 
 
-  Future<String> getUserChats(String user1,String user2) async {
+  Future<String> getUserChats({String ? user1,String ? user2,required String ?  productid}) async {
     String chat_id ='';
     CollectionReference collection =
     FirebaseFirestore.instance.collection('chatRoom');
@@ -133,8 +150,11 @@ class SocialMediaDatabase{
         Map<String, dynamic>? fetcheddata =
         element.data() as Map<String, dynamic>;
         List users = fetcheddata['users'];
-        if (users.contains(user1) && users.contains(user2)) {
-          addChatRoom(chatRoomId: element.id, chatRoom: {'users': users});
+        if (users.contains(user1) && users.contains(user2) && fetcheddata['product_id']==productid) {
+          addChatRoom(chatRoomId: element.id, chatRoom: {
+            'users': users,
+          'product_id':productid
+          });
           chat_id=element.id;
         }
       });
@@ -146,11 +166,13 @@ class SocialMediaDatabase{
           user2
         ];
 
-        chat_id = user1+
+        chat_id = user1!+
             "and" +
-            user2;
+            user2!+"and"+productid!;
 
-        addChatRoom(chatRoomId: chat_id, chatRoom: {'users': users});
+        addChatRoom(chatRoomId: chat_id, chatRoom: {'users': users,
+          'product_id':productid
+        });
 
       }
     });
@@ -158,46 +180,18 @@ class SocialMediaDatabase{
     return chat_id;
   }
 
-  Future getUserInfogetChats(String user2) async {
-    final result =await getUserChats(user_id,user2);
+  Future getUserInfogetChats({String ? user2,required String ? product_id}) async {
+    final result =await getUserChats(user1: user_id,user2: user2,productid:product_id );
     return result;
   }
 
 
-  Future AcceptRequest({
-    List<MyUser> ? allfrdz,
-    List<MyUser> ? allrequests,String ? senderID,String ? senderdocID}) async {
-
-    print("before deletetion"+allrequests.toString());
-    allrequests!.removeWhere((element) => element.uid==senderID);
-
-    print("after deletetion"+allrequests.toString());
-
-
-    CollectionReference collection =
-    FirebaseFirestore.instance.collection('Users');
-    collection.doc(senderdocID).set(
-        {
-          'request':    allrequests.map((e) => {
-            'username':e.username,
-            'userid':e.uid.toString(),
-            'email':e.email.toString(),
-            'imageurl':e.imageurl,
-            'docid':e.doc
-          }).toList()
-        }
-
-        , SetOptions(merge: true));
-
-  }
-
-
-  Future AddFriend_Sender({
+  Future addfollowing({
 
     List<MyUser> ? allfrdz,
     MyUser ? newfriend,String ? docid}) async {
     FirebaseAuth _auth=FirebaseAuth.instance;
-    final User? user = await _auth.currentUser;
+
 
     if(allfrdz!.any((element) => element.uid==newfriend!.uid))
     {
@@ -221,7 +215,7 @@ class SocialMediaDatabase{
     FirebaseFirestore.instance.collection('Users');
     collection.doc(docid).set(
         {
-          'friends':    allfrdz.map((e) => {
+          'following':    allfrdz.map((e) => {
             'username':e.username,
             'userid':e.uid.toString(),
             'email':e.email.toString(),
@@ -234,79 +228,36 @@ class SocialMediaDatabase{
 
   }
 
+  Future addfollower({
 
-
-
-  Future AddFriend_Reciever({
-    MyUser ? reciverfrd,
-    String ? recieverID,
-    String ? senderDOCID,
-  }) async {
+    List<MyUser> ? allfrdz,
+    MyUser ? newfriend,String ? docid}) async {
     FirebaseAuth _auth=FirebaseAuth.instance;
-    final User? user = await _auth.currentUser;
 
 
-    List<MyUser> frdz=[];
-    CollectionReference collection =
-    FirebaseFirestore.instance.collection('Users');
-
-    await collection.get().then((QuerySnapshot snapshot) {
-      snapshot.docs.forEach((element) {
-
-
-        Map fetcheddata = element.data() as Map<String, dynamic>;
-
-        if(fetcheddata['userid']==recieverID){
-
-
-          List<dynamic> req=fetcheddata['friends'];
-
-          req.forEach((element) {
-
-            frdz.add(MyUser(
-                doc: element['docid'],
-                uid: element['id'].toString(),
-                email: element['email'].toString(),
-                username: element['username'].toString(),
-                imageurl: element['imageurl'].toString(),
-            ),
-            );
-          });
-        }
-
-      });
-    });
-
-//after getting all frds of sender
-    MyUser ? newfriend;
-    if(frdz.any((element) => element.uid==newfriend!.uid))
+    if(allfrdz!.any((element) => element.uid==newfriend!.uid))
     {
 
     }
     else{
-      newfriend=MyUser(
-        doc: senderDOCID,
-        email: user!.email,
-        imageurl: user.photoURL,
-        username: user.displayName,
-        uid: user_id,
-      );
-      frdz.add(
+      allfrdz.add(
           MyUser(
-            doc: newfriend.doc,
+            doc: newfriend!.doc,
             imageurl: newfriend.imageurl,
             username: newfriend.username,
             email: newfriend.email,
             uid: newfriend.uid,
+            request:newfriend.request ,
+            friendlist: newfriend.friendlist,
           )
       );
     }
 
-    collection =
-        FirebaseFirestore.instance.collection('Users');
-    collection.doc(reciverfrd!.doc).set(
+    CollectionReference collection =
+    FirebaseFirestore.instance.collection('Users');
+    collection.doc(docid).set(
         {
-          'friends':    frdz.map((e) => {
+          'followers':    allfrdz.map((e) => {
             'username':e.username,
             'userid':e.uid.toString(),
             'email':e.email.toString(),
@@ -314,57 +265,37 @@ class SocialMediaDatabase{
             'docid':e.doc
           }).toList()
         }
-
         , SetOptions(merge: true));
-
-
-
-
   }
-
-
-
-  Future SendRequest({MyUser ? reciever,String ? docid}) async {
-    FirebaseAuth _auth=FirebaseAuth.instance;
-    final User? user = await _auth.currentUser;
-
-    List<MyUser>? requestlist=reciever!.request;
-    if(requestlist!.any((element) => element.uid==element.uid))
-    {
-
-    }
-    else{
-      requestlist.add(
-          MyUser(
-            doc: docid,
-            imageurl: user!.photoURL.toString(),
-            username: user.displayName.toString(),
-            email: user.email.toString(),
-            uid: user_id.toString(),
-            request: [],
-            friendlist: [],
-          )
+  Future<void> sendPushMessage({required String ? title,required String ? body,required String ? token}) async {
+    try {
+      await http.post(
+        Uri.parse('https://fcm.googleapis.com/fcm/send'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'key=AAAANsg9vGw:APA91bELSgg4VP-yqDIPdu0ZkFXWmM8gcouMTQn34XyBWdMxICRWz3gPFl-bJKL_V2cjcj9WbzgwoONfPB2aepNuMEyFl3JeHwdq44OBG4HD4CR7BMOFnwRpclh_eSqJRer-l3eWR0ii',
+        },
+        body: jsonEncode(
+          <String, dynamic>{
+            'notification': <String, dynamic>{
+              'body': body,
+              'title': title
+            },
+            'priority': 'high',
+            'data': <String, dynamic>{
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'id': '1',
+              'status': 'done'
+            },
+            "to": token,
+          },
+        ),
       );
+    } catch (e) {
+      print("error push notification");
     }
-
-    CollectionReference collection =
-    FirebaseFirestore.instance.collection('Users');
-    collection.doc(reciever.doc).set(
-        {
-          'request':    requestlist.map((e) => {
-            'username':e.username,
-            'userid':e.uid.toString(),
-            'email':e.email.toString(),
-            'imageurl':e.imageurl,
-            'docid':docid
-          }).toList()
-        }
-
-        , SetOptions(merge: true));
-
   }
-
-
 
 
 }
+SocialMediaDatabase socialMediaDatabase=SocialMediaDatabase();
